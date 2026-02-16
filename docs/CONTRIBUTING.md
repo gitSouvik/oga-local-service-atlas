@@ -13,27 +13,32 @@ Thank you for your interest in contributing! This document provides guidelines a
 ### Development Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/OpenGovAfrica/oga-local-service-atlas.git
    cd oga-local-service-atlas
    ```
 
 2. **Copy environment file**
+
    ```bash
    cp .env.example .env
    ```
 
 3. **Start services with Docker**
+
    ```bash
    docker compose up -d
    ```
 
 4. **Run migrations**
+
    ```bash
    docker compose exec backend python manage.py migrate
    ```
 
 5. **Create a superuser**
+
    ```bash
    docker compose exec backend python manage.py createsuperuser
    ```
@@ -82,6 +87,13 @@ pip install pre-commit
 pre-commit install
 ```
 
+Docker equivalents:
+
+```bash
+docker compose exec backend ruff check backend/
+docker compose exec backend black --check backend/
+```
+
 ### Commit Messages
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
@@ -94,6 +106,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore:` - Maintenance tasks
 
 Examples:
+
 ```
 feat: add geographic area API endpoints
 fix: correct state transition validation in reports
@@ -102,22 +115,33 @@ docs: update API documentation for evidence upload
 
 ### Testing
 
-All new features must include tests. We use pytest with Django.
+All new features must include tests. We use pytest with Django and GeoDjango.
+
+Docker (recommended):
 
 ```bash
 # Run tests
+docker compose exec backend pytest -q
+
+# With coverage
+docker compose exec backend pytest --cov=apps --cov-report=term-missing
+```
+
+Local (without Docker):
+
+```bash
 cd backend
 pytest
-
-# Run with coverage
-pytest --cov=apps --cov-report=term-missing
 ```
 
 Minimum coverage requirement: **70%** for business logic.
 
+GeoDjango tip: match geometry types in tests. `GeographicArea.geometry` is a MultiPolygon—wrap a `Polygon` in `MultiPolygon` when creating areas in tests to avoid type errors.
+
 ## Pull Request Process
 
 1. **Create a feature branch**
+
    ```bash
    git checkout -b feat/your-feature-name
    ```
@@ -128,6 +152,7 @@ Minimum coverage requirement: **70%** for business logic.
    - Update documentation if needed
 
 3. **Run checks locally**
+
    ```bash
    ruff check backend/
    black --check backend/
@@ -164,6 +189,36 @@ Changes to data models require:
 - All data entries must have `data_source` specified
 - Evidence files are hashed for integrity
 - Reports require evidence unless flagged as low-confidence
+
+## Phase 2: Ingestion & Harmonization Guidelines
+
+### Official Data Ingestion
+
+- Use `InfrastructureIngester` to parse official datasets (GeoJSON FeatureCollections).
+- Always populate provenance on created assets: `data_owner`, `license`, `source_url`, `update_frequency`.
+- Preserve original source `properties` as `source_metadata` for auditability.
+- If geometry is not a Point, use its centroid for the asset `location`.
+- Link assets to the smallest `GeographicArea` that spatially covers the point.
+- Add tests for ingestion mapping and edge cases (missing geometry, unknown types).
+
+### Report Harmonization
+
+- Use `HarmonizationService` for matching reports to assets.
+- Matching includes spatial proximity, asset type filtering, and optional name similarity (pg_trgm).
+- Ensure `pg_trgm` is enabled via migration (already included in the reports app).
+- Keep auto-link thresholds conservative; add tests for close, borderline, and far cases.
+- Expose unmatched reports via `/api/v1/reports/unmatched/` for manual review.
+
+## API for Contributors
+
+- Browse OpenAPI: http://localhost:8000/api/docs/
+- Read operations are open; write operations require auth.
+- Obtain JWT:
+  - `POST /api/v1/auth/token/` with `{"username":"<user>","password":"<pass>"}`
+  - Use `Authorization: Bearer <access_token>`
+- Useful endpoints:
+  - Assets: `/api/v1/infrastructure/assets/`, `/api/v1/infrastructure/assets/geojson/`
+  - Reports: `/api/v1/reports/`, `/api/v1/reports/unmatched/`, `/api/v1/reports/geojson/`
 
 ## Getting Help
 

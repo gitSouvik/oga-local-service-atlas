@@ -145,6 +145,19 @@ class ReportViewSet(viewsets.ModelViewSet):
         serializer = ReportListSerializer(queryset, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=["get"])
+    def unmatched(self, request):
+        """
+        Return reports that have not been matched to an infrastructure asset.
+        Useful for manual harmonization review.
+        """
+        queryset = self.get_queryset().filter(
+            infrastructure_asset__isnull=True,
+            current_state__in=[ReportState.SUBMITTED, ReportState.UNDER_REVIEW],
+        )
+        serializer = ReportListSerializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class EvidenceViewSet(viewsets.ModelViewSet):
     """API endpoints for Evidence."""

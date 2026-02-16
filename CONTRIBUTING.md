@@ -67,6 +67,27 @@ From Phase 0 through the final phase, contributors may not jointly claim the sam
 
 ---
 
+### Testing Phase 2 Features
+
+We have added end-to-end tests and a demo command for Phase 2 features (Ingestion & Harmonization).
+
+**Running the Demo:**
+To see the full ingestion and harmonization flow in action:
+```bash
+python backend/manage.py demo_phase2
+```
+This command:
+1.  Sets up a demo environment (State, District).
+2.  Ingests a sample GeoJSON dataset of schools.
+3.  Simulates citizen reports (some matching assets, some new).
+4.  Runs the harmonization service to link reports to assets.
+5.  Outputs the results to the console.
+
+**Running Tests:**
+```bash
+pytest backend/tests/test_phase2_e2e.py
+```
+
 ### Pull Request Requirements
 
 Every Pull Request must:

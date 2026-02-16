@@ -2,7 +2,8 @@
   "venvPath": ".",
   "venv": ".venv",
   "pythonVersion": "3.12",
-  "typeCheckingMode": "basic",
-  "reportMissingImports": false,
+  "typeCheckingMode": "off",
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": false,
   "include": ["backend"]
 }

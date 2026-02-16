@@ -130,6 +130,28 @@ class InfrastructureAsset(AuditableModel):
         help_text="Whether this asset record is active",
     )
 
+    # Phase 2: Ingestion & Official Sources
+    data_owner = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Organization that owns the data (e.g., Ministry of Health)",
+    )
+    update_frequency = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Frequency of data updates (e.g., Annual, Monthly)",
+    )
+    license = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Data license (e.g., CC-BY-4.0)",
+    )
+    source_metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Raw metadata from the source for auditability",
+    )
+
     class Meta:
         verbose_name = "Infrastructure Asset"
         verbose_name_plural = "Infrastructure Assets"
@@ -141,5 +163,5 @@ class InfrastructureAsset(AuditableModel):
         ]
 
     def __str__(self):
-        name = self.official_name or self.local_name or f"{self.get_asset_type_display()}"
+        name = self.official_name or self.local_name or f"{self.get_asset_type_display()}"  # type: ignore
         return f"{name} ({self.geographic_area.name})"
